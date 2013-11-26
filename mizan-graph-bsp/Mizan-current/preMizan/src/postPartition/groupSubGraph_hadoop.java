@@ -40,30 +40,34 @@ public class groupSubGraph_hadoop {
 			String input = value.toString();
 			if (!input.startsWith("#") && input.trim().length() != 0) {
 				StringTokenizer st = new StringTokenizer(input, " \t");
-				long srcV = Long.parseLong(st.nextToken());
-				long srcSubG = Long.parseLong(st.nextToken());
-				long dstV = Long.parseLong(st.nextToken());
-				long dstSubG = Long.parseLong(st.nextToken());
-
-				VLongWritable[] outArray1 = new VLongWritable[4];
-				outArray1[0] = new VLongWritable(srcV);
-				outArray1[1] = new VLongWritable(srcSubG);
-				outArray1[2] = new VLongWritable(dstV);
-				outArray1[3] = new VLongWritable(dstSubG);
-
-				VLongWritable[] outArray2 = new VLongWritable[4];
-				outArray2[0] = new VLongWritable(srcV);
-				outArray2[1] = new VLongWritable(srcSubG);
-				outArray2[2] = new VLongWritable(dstV);
-				outArray2[3] = new VLongWritable(dstSubG);
+				int tokenSize = st.countTokens();
+				
+				VLongWritable[] outArray1 = new VLongWritable[tokenSize];
+				VLongWritable[] outArray2 = new VLongWritable[tokenSize];
+				
+				int i=0;
+				int srcSubG = 0;
+				int dstSubG = 0;
+				while(st.hasMoreTokens()){
+					long value = Long.parseLong(st.nextToken());
+					outArray1[i] = new VLongWritable(value);
+					outArray2[i] = new VLongWritable(value);
+					if(i==1){
+						srcSubG=(int)value;
+					}
+					else if(i==(tokenSize-2)){
+						dstSubG=(int)value;
+					}
+					i++;
+				}
 
 				VLongArrayWritable outVal1 = new VLongArrayWritable();
 				outVal1.set(outArray1);
 				VLongArrayWritable outVal2 = new VLongArrayWritable();
 				outVal2.set(outArray2);
 
-				IntWritable key1 = new IntWritable((int) srcSubG);
-				IntWritable key2 = new IntWritable((int) dstSubG);
+				IntWritable key1 = new IntWritable(srcSubG);
+				IntWritable key2 = new IntWritable(dstSubG);
 
 				context.write(key1, outVal1);
 				if (duplicate && srcSubG != dstSubG) {

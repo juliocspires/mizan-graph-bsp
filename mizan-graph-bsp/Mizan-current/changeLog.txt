@@ -11,3 +11,10 @@ Notes:
 	3- Fixing vertex state to correctly be active after voteToHalt
 	4- Fixing Global out messages counter
 
+***** Version 0.2b Update 1 *****
+Release Date:
+Notes:
+	1- Fixing parsing errors
+	2- Adding PageRank Example
+	3- Cleaning up some comments
+	4- Adding support for edge reading

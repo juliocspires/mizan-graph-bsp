@@ -1,0 +1,13 @@
+***** Version 0.1b *****
+Release Date: March-8-2013
+Notes: Initial public version1
+
+
+***** Version 0.1b Update 1 *****
+Release Date: April-10-2013
+Notes:
+	1- Synchronizing user aggregator functions after Isuperstep.initialize()
+	2- Fixing memory leaks from array data structures
+	3- Fixing vertex state to correctly be active after voteToHalt
+	4- Fixing Global out messages counter
+

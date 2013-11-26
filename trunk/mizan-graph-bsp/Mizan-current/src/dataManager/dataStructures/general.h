@@ -24,7 +24,7 @@ enum migrationMode{
 	NONE,DelayMigrationOnly,MixMigration,PregelWorkStealing,
 };
 enum fileSystem {
-	HDFS, OS_DISK_MASTER, OS_DISK_ALL,
+	HDFS, OS_DISK_MASTER, OS_DISK_ALL, NOFS
 };
 enum edgeStorage {
 	InOutNbrStore, InNbrStore, OutNbrStore, NoneNbrStore

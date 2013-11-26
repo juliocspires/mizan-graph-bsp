@@ -1051,6 +1051,8 @@ public:
 	void appendIncomeQueueAll(M& message) {
 		if (acceptGate()) {
 			cm->appendIncomeQueueAll(message);
+		} else {
+			ssOutSync++;
 		}
 	}
 	void appendIncomeQueueNbr(K& src, M& message, DATA_CMDS inOut) {
@@ -1058,6 +1060,8 @@ public:
 //				<< src.getValue() << std::endl;
 		if (acceptGate()) {
 			cm->appendIncomeQueueNbr(src, message, inOut);
+		} else {
+			ssOutSync++;
 		}
 	}
 	int ssOutSync;
@@ -1071,6 +1075,9 @@ public:
 	void appendLocalIncomeQueue(K& dst, M& message) {
 		if (acceptGate()) {
 			cm->appendLocalIncomeQueue(dst, message);
+
+		} else {
+			ssOutSync++;
 		}
 	}
 	void enableVertexSteal() {
@@ -1165,6 +1172,10 @@ public:
 	}
 	std::vector<edge<K, V1> *> * getOutEdges(K vertex) {
 		return dm->getOutEdges(vertex);
+	}
+
+	bool getReplication(K vertex) {
+		return dm->getVertexObjByKey(vertex)->getIsReplicated();
 	}
 
 	virtual ~Mizan() {

@@ -104,8 +104,8 @@ private:
 		DATA_CMDS dCode;
 		memcpy(&dCode, recv_buf, sizeof(int));
 		recv_buf += sizeof(int);
-				cout << "(" << rank << ") Received -- " << DATA_CMDS_strings[dCode]
-						<< " message from " << from_rank << endl;
+		//		cout << "(" << getRank() << ") Received -- " << DATA_CMDS_strings[dCode]
+		//				<< " message from " << from_rank << endl;
 		while (dCode != ENDDMSG) {
 
 			if (dCode == SSdata) {
@@ -1068,7 +1068,7 @@ public:
 		for (int i = 0; i < psize; i++) {
 
 			boost::mutex::scoped_lock test_lock = boost::mutex::scoped_lock(
-								this->DATAbuff);
+					this->DATAbuff);
 			if (DATA_buffers_counters[i] > sizeof(int)) {
 
 				append_int_val(DATA_buffers_cursors[i], dsys);
@@ -1104,15 +1104,14 @@ public:
 
 	void AppendBuffMsg(char* buf, int buf_len, int PEdest) {
 
+//		cout << "(" << rank << ") NOT ALLOWED TO USE BUFF DATA" << endl;
+//		cout.flush();
+//		throw(230);
 
 		try {
 			boost::mutex::scoped_lock test_lock = boost::mutex::scoped_lock(
 					this->DATAbuff);
 			bool can_insert = validate_DATAbuffer_insertion(buf_len, PEdest);
-			
-			cout << "(" << rank << ") can_insert:" <<can_insert << endl;
-			cout.flush();
-			
 			if (can_insert) {
 				memcpy(DATA_buffers_cursors[PEdest], buf, buf_len);
 				DATA_buffers_cursors[PEdest] += buf_len;
@@ -1279,83 +1278,100 @@ public:
 
 	void sendMessageOutNbrs(K &srcId, M &msg) {
 
-	
 		int msglen = 0;
 		char *the_msg = msg.byteEncode(msglen);
 
 		vector<edge<K, V1> *> * dest_VIds = mizan->getOutEdges(srcId);
-		std::set<int> dest_ranks;
-		std::set<int>::iterator it = dest_ranks.begin();
-		bool found_ranks = true;
-		for (int i = 0; i < dest_VIds->size() && found_ranks; i++) {
-			K dstVer = dest_VIds->operator [](i)->getID();
 
-			bool exist = mizan->vertexExists(dstVer);
+		bool replication = mizan->getReplication(srcId);
 
-			if (!exist) {
-				int loc = dht_comm->retrieve_val(dstVer);
-				if (loc == -1) {
-					int extra_info = discovered_maps->retrieve_val(dstVer);
-					if (extra_info < 0) {
-						found_ranks = false;
+		if (replication) {
+			//vertex is replicated on multiple machines
+
+
+			std::set<int> dest_ranks;
+			std::set<int>::iterator it = dest_ranks.begin();
+			bool found_ranks = true;
+			for (int i = 0; i < dest_VIds->size() && found_ranks; i++) {
+				K dstVer = dest_VIds->operator [](i)->getID();
+
+				bool exist = mizan->vertexExists(dstVer);
+
+				if (!exist) {
+					int loc = dht_comm->retrieve_val(dstVer);
+					if (loc == -1) {
+						int extra_info = discovered_maps->retrieve_val(dstVer);
+						if (extra_info < 0) {
+							found_ranks = false;
+						} else {
+							dest_ranks.insert(extra_info);
+						}
 					} else {
-						dest_ranks.insert(extra_info);
+						dest_ranks.insert(loc);
 					}
 				} else {
-					dest_ranks.insert(loc);
+					dest_ranks.insert(rank);
 				}
+
+			} //end of vertices
+
+			if (found_ranks) {
+//			cout << "(" << rank << ") ALL RANKS FOUND for ID#"
+//					<< srcId.getValue() << endl;
+//			cout.flush();
+				it = dest_ranks.begin();
+				for (; it != dest_ranks.end(); it++) {
+					int dst_pe = *it;
+
+					if (dst_pe != rank) {
+						int index;
+						char* buf = (char*) malloc(data_msgsize * sizeof(char)); //bp.request_buffer(index);
+						char *orig_start = buf;
+
+						msgHeader HeadCode = _DATA;
+						append_int_val(buf, HeadCode);
+
+						DATA_CMDS dsys = OutNbrs;
+						append_int_val(buf, dsys);
+
+						append_K_ID(buf, srcId);
+						append_char_itsSize(buf, the_msg, msglen);
+
+						dsys = ENDDMSG;
+						append_int_val(buf, dsys);
+
+						int buf_size = 0;
+						buf_size = buf - orig_start;
+
+						//AppendBuffMsg(orig_start, buf_size, dst_pe);
+						sendMPICommand(orig_start, buf_size, dst_pe);
+
+						free(orig_start);
+						//bp.set_freeNotSend_buff(index);
+					} else {
+						mizan->appendIncomeQueueNbr(srcId, msg, OutNbrs);
+					}
+				}
+
 			} else {
-				dest_ranks.insert(rank);
-			}
-
-		} //end of vertices
-
-		//found_ranks = false;
-		if (found_ranks) {
-			cout << "(" << rank << ") ALL RANKS FOUND for ID#"
-					<< srcId.getValue() << endl;
-			cout.flush();
-			it = dest_ranks.begin();
-			for (; it != dest_ranks.end(); it++) {
-				int dst_pe = *it;
-
-				if (dst_pe != rank) {
-					int index;
-					char* buf = (char*) malloc(data_msgsize * sizeof(char)); //bp.request_buffer(index);
-					char *orig_start = buf;
-
-					//msgHeader HeadCode = _DATA;
-					//append_int_val(buf, HeadCode);
-
-					DATA_CMDS dsys = OutNbrs;
-					append_int_val(buf, dsys);
-
-					append_K_ID(buf, srcId);
-					append_char_itsSize(buf, the_msg, msglen);
-
-					//dsys = ENDDMSG;
-					//append_int_val(buf, dsys);
-
-					int buf_size = 0;
-					buf_size = buf - orig_start;
-
-					AppendBuffMsg(orig_start, buf_size, dst_pe);
-					//sendMPICommand(orig_start, buf_size, dst_pe);
-
-					free(orig_start);
-					//bp.set_freeNotSend_buff(index);
-				} else {
-					mizan->appendIncomeQueueNbr(srcId, msg, OutNbrs);
-				}
-			}
-
-		} else {
 
 //			cout << "(" << rank << ") NOT FOUND RANKS for ID#"
 //					<< srcId.getValue() << endl;
 //			cout.flush();
-			it = dest_ranks.begin();
-			dest_ranks.erase(it, dest_ranks.end());
+				it = dest_ranks.begin();
+				dest_ranks.erase(it, dest_ranks.end());
+
+				for (int i = 0; i < dest_VIds->size(); i++) {
+					K dstVer = dest_VIds->operator [](i)->getID();
+					sendMessage(dstVer, msg);
+				}
+
+			}
+
+
+
+		} else {
+			// vertex is not replicated and therefore, need to send msg individually to each vertex
 
 			for (int i = 0; i < dest_VIds->size(); i++) {
 				K dstVer = dest_VIds->operator [](i)->getID();
@@ -1364,21 +1380,46 @@ public:
 
 		}
 
+
 		free(the_msg);
 
 	}
 
 	void sendMessageToAll(M &msg) {
 
-		
-	}
+		int msglen = 0;
+		char *the_msg = msg.byteEncode(msglen);
 
+		for (int i = 0; i < psize; i++) {
+
+			if (i != rank) {
+				int index;
+				char* buf = bp.request_buffer(index);
+				char *orig_start = buf;
+//			msgHeader head_code = _DATA;
+//			append_int_val(buf, head_code);
+				DATA_CMDS dsys = ALLVTX;
+				append_int_val(buf, dsys);
+				append_char_itsSize(buf, the_msg, msglen);
+//			dsys = ENDDMSG;
+//			append_int_val(buf, dsys);
+				int buf_size = 0;
+				buf_size = buf - orig_start;
+
+				AppendBuffMsg(orig_start, buf_size, i);
+				bp.set_freeNotSend_buff(index);
+			} else {
+				mizan->appendIncomeQueueAll(msg);
+			}
+		}
+
+		free(the_msg);
+	}
 
 	void BroadcastSysMessageValue(SYS_CMDS command, IdataType &value,
 			SYS_CMDS_PRIORITY pri) {
 
-
-		if ( pri == AFTER_DATABUFFER_PRIORITY /* command == EndofSS*/) {
+		if (pri == AFTER_DATABUFFER_PRIORITY /* command == EndofSS*/) {
 
 			hamza.lock();
 //			cout << "(" << rank << ") k_dataMsgsCount= " << k_dataMsgsCount

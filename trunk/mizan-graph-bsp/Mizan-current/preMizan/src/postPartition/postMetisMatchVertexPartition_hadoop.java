@@ -236,7 +236,7 @@ public class postMetisMatchVertexPartition_hadoop {
 		confA.setQuietMode(true);
 
 		confA.set("PARTID_DISPLACEMENT", 1 + "");
-		confA.set("EDGE_WEIGHT", 0 + "");
+		confA.set("EDGE_WEIGHT", args[3]);
 		confA.set("GRAPH_PARTITIONED","false");
 		
 		Job jobA = new Job(confA, "5a- postMetisVertexMatch");
@@ -264,7 +264,7 @@ public class postMetisMatchVertexPartition_hadoop {
 		confB.setQuietMode(true);
 		
 		confB.set("PARTID_DISPLACEMENT", 1 + "");
-		confB.set("EDGE_WEIGHT", 0 + "");
+		confB.set("EDGE_WEIGHT",args[3]);
 		confB.set("GRAPH_PARTITIONED","false");
 
 		Job jobB = new Job(confB, "5b- postMetisVertexMatch");

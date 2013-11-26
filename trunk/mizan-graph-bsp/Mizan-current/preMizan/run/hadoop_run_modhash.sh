@@ -1,7 +1,7 @@
-if [ $# -ne 3 ]
+if [ $# -ne 4 ]
 then
 	echo $?
-	echo "Command error, input format = $0 [graph_name in "hdfs:input/"] [partition size] [duplicate outDegree]"
+	echo "Command error, input format = $0 [graph_name in "hdfs:input/"] [partition size] [duplicate outDegree] [edge weight count]"
 	exit -1
 fi
 
@@ -10,7 +10,7 @@ hadoop dfsadmin -safemode wait
 hadoop dfs -rmr mizan_output*
 
 echo "**** Running modHashPartitioning ****"
-hadoop jar preMizan.jar partitioning.modHashPartitioning_hadoop $2 input/$1 mizan_output1
+hadoop jar preMizan.jar partitioning.modHashPartitioning_hadoop $2 input/$1 mizan_output1 $4
 
 if [ $? -ne 0 ]
 then
@@ -19,7 +19,7 @@ then
 fi
 
 echo "**** Running postMetisMatchVerPart Stage ****"
-hadoop jar preMizan.jar postPartition.postMetisMatchVertexPartition_hadoop input/$1 mizan_output1 mizan_output2
+hadoop jar preMizan.jar postPartition.postMetisMatchVertexPartition_hadoop input/$1 mizan_output1 mizan_output2 $4
 
 if [ $? -ne 0 ]
 then

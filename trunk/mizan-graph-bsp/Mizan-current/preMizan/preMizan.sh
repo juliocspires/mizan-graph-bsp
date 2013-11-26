@@ -1,9 +1,14 @@
-if [ $# -ne 2 ]
+if [ $# -ne 2 ] && [ $# -ne 3 ]
 then
-        echo "Command error, input format = $0 [input graph] [cluster/partition size]"
+        echo "Command error, input format = $0 [input graph] [cluster/partition size] [OPTINAL: Vertex weight count -- default = 0]"
         exit -1
 fi
 
+weightCnt=0
+if [ $# -eq 3 ]
+then
+    weightCnt=$3
+fi
 
 inputFile=$(basename $1)
 
@@ -17,8 +22,8 @@ echo "Select your partitioning type:"
 while true; do
     read -p "" yn
     case $yn in
-        [1]* ) cd hadoopScripts; ./hadoop_run_modhash.sh $inputFile $2 true; break;;
-        [2]* ) cd hadoopScripts; ./hadoop_run_range.sh $inputFile $2 true; break;;
+        [1]* ) cd hadoopScripts; ./hadoop_run_modhash.sh $inputFile $2 true $weightCnt ; break;;
+        [2]* ) cd hadoopScripts; ./hadoop_run_range.sh $inputFile $2 true $weightCnt ; break;;
         * ) echo "Please answer by typing 1 or 2.";;
     esac
 done

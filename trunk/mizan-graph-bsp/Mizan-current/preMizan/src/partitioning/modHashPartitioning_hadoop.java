@@ -100,7 +100,7 @@ public class modHashPartitioning_hadoop {
 
 		conf.set("TOTAL_PARTS", args[0] + "");
 		conf.set("VERTEX_DISPLACEMENT", 1+"");
-		conf.set("EDGE_WEIGHT", 0+"");
+		conf.set("EDGE_WEIGHT", args[3]);
 
 		Job job = new Job(conf, "modHashMapper");
 		job.setOutputFormatClass(extraKeyTextWriter.class);

@@ -116,8 +116,15 @@ public:
 				}
 			}
 			if (vm.count("user")) {
-				args.hdfsUserName.append(vm["user"].as<std::string>());
-				args.fs = HDFS;
+				if (args.fs == HDFS) {
+					args.hdfsUserName.append(vm["user"].as<std::string>());
+				} else {
+					std::cerr
+							<< "ERROR: You have to specify HDFS file System through --fs."
+							<< std::endl;
+					exit(-1);
+				}
+				//args.fs = HDFS;
 			}
 
 			if (vm.count("migration")) {

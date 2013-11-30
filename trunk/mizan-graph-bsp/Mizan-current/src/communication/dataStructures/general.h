@@ -61,7 +61,7 @@ enum SYS_CMDS {
 	SendStolenVertex,
 	StolenVertexResult,
 	GraphMutation,
-	LateStats,
+	LateStats,LateStatsTerminate,
 	StealBarrier,
 	Aggregator,
 	MigrateBarrier,

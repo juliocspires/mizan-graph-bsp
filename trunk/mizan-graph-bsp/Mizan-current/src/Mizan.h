@@ -350,31 +350,32 @@ public:
 		cm->gatherStats();
 		cm->performDataMutations();
 		bool subTerminate = cm->cleanUp(enableVertices);
-		if (subTerminate == true) {
-			terminateMizan();
+
+		mLong * array = new mLong[8];
+		array[0].setValue(myRank);
+		array[1].setValue(ssActualFinish);
+		array[2].setValue(cm->getXSumInCommLocal() + cm->getXSumInCommGlobal());
+		array[3].setValue(cm->getSumInCommLocal() + cm->getSumInCommGlobal());
+		array[4].setValue(cm->getSumOutCommGlobal());
+		array[5].setValue(cm->getSumInCommGlobal());
+		array[6].setValue(cm->getXSumInCommGlobal());
+		array[7].setValue(
+				((long) (dm->getAvaliableSystemMemoryPercent() * 100)));
+		mLongArray value(8, array);
+
+		cm->storeInCommInfo();
+
+		if (subTerminate) {
+			dataPtr.sc->BroadcastSysMessageValue(LateStatsTerminate, value,
+					AFTER_DATABUFFER_PRIORITY);
 		} else {
-			mLong * array = new mLong[8];
-			array[0].setValue(myRank);
-			array[1].setValue(ssActualFinish);
-			array[2].setValue(
-					cm->getXSumInCommLocal() + cm->getXSumInCommGlobal());
-			array[3].setValue(
-					cm->getSumInCommLocal() + cm->getSumInCommGlobal());
-			array[4].setValue(cm->getSumOutCommGlobal());
-			array[5].setValue(cm->getSumInCommGlobal());
-			array[6].setValue(cm->getXSumInCommGlobal());
-			array[7].setValue(
-					((long) (dm->getAvaliableSystemMemoryPercent() * 100)));
-			mLongArray value(8, array);
-
-			cm->storeInCommInfo();
-
 			dataPtr.sc->BroadcastSysMessageValue(LateStats, value,
 					AFTER_DATABUFFER_PRIORITY);
 		}
 
 	}
 	void recvLateStats(int size, char * data) {
+
 		//cout << "PE" << myRank << " recvLateStats()" << std::endl;
 		mLongArray value;
 		value.byteDecode(size, data);
@@ -409,13 +410,18 @@ public:
 			}
 		}
 
-		if (sysGroupMessageCounter[LateStats] == PECount) {
+		if (sysGroupMessageCounter[LateStatsTerminate] == PECount) {
+			terminateMizan();
+		} else if ((sysGroupMessageCounter[LateStats]
+				+ sysGroupMessageCounter[LateStatsTerminate]) == PECount) {
 			sysGroupMessageCounter[LateStats] = 0;
+			sysGroupMessageCounter[LateStatsTerminate] = 0;
 
 			(tm.tp).schedule(
 					boost::bind(&Mizan<K, V1, M, A>::bodyRecvEndOfSSTerminate,
 							this));
 		}
+
 	}
 	void bodyRecvEndOfSSTerminate() {
 		//cout << "PE" << myRank << " bodyRecvEndOfSSTerminate()" << std::endl;
@@ -875,6 +881,8 @@ public:
 				&Mizan<K, V1, M, A>::recvGraphMutation, this, _1, _2);
 		sysGroupMessageContainerValue[LateStats] = boost::bind(
 				&Mizan<K, V1, M, A>::recvLateStats, this, _1, _2);
+		sysGroupMessageContainerValue[LateStatsTerminate] = boost::bind(
+				&Mizan<K, V1, M, A>::recvLateStats, this, _1, _2);
 		sysGroupMessageContainer[StealBarrier] = boost::bind(
 				&Mizan<K, V1, M, A>::recvStealBarrier, this);
 		sysGroupMessageContainerValue[Aggregator] = boost::bind(
@@ -894,6 +902,7 @@ public:
 		sysGroupMessageCounter.insert(make_pair(StolenVertexResult, 0));
 		sysGroupMessageCounter.insert(make_pair(GraphMutation, 0));
 		sysGroupMessageCounter.insert(make_pair(LateStats, 0));
+		sysGroupMessageCounter.insert(make_pair(LateStatsTerminate, 0));
 		sysGroupMessageCounter.insert(make_pair(StealBarrier, 0));
 		sysGroupMessageCounter.insert(make_pair(Aggregator, 0));
 

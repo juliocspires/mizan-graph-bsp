@@ -141,10 +141,7 @@ public class preMetisGraphFix_hadoop {
 				// output value format (count dst1 dst2 .. dstx)
 				// OPT1
 				VLongWritable[] edges = new VLongWritable[edge_set.size()];
-				// LongWritable [] edges = new LongWritable[1];
-				// edges["Farania Rangkuti" <farania.rangkuti@kaust.edu.sa>, 0] = new VLongWritable(edge_set.size());
-				// edges[0] = new LongWritable(fuck);
-
+			
 				// long time3 = new Date().getTime();
 				int i = 0;
 				for (VLongWritable dst : edge_set) {

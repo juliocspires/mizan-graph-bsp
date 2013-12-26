@@ -119,6 +119,7 @@ public class postMetisVertexAssignID_hadoop {
 					//wait for Map output A
 					VLongArrayWritable newOutVal = new VLongArrayWritable();
 					VLongWritable[] newOutValArray = new VLongWritable[2];
+					//TODO check correctness
 					newOutValArray[0] = new VLongWritable(((VLongWritable)outVal.get()[0]).get()-offset -1);
 					newOutValArray[1] = new VLongWritable(((VLongWritable)outVal.get()[1]).get());
 					newOutVal.set(newOutValArray);

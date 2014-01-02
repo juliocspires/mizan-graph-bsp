@@ -20,6 +20,9 @@ public:
 			aggValue = value;
 		}
 	}
+	void createInitialValue(){
+		aggValue=0;
+	}
 	mLong getValue() {
 		return aggValue;
 	}

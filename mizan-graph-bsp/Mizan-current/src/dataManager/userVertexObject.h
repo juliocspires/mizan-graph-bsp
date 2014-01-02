@@ -19,16 +19,19 @@ private:
 	mObject<K, V1, M> * myVertex;
 	systemWideInfo<K> * sysInfo;
 	std::map<char *, IAggregator<A> *> * aggContainer;
+	std::map<char *, A> * tmpAggContainer;
 	boost::mutex * aggLock;
 	std::queue<graphMutatorStore<K> > * pendingMutations;
 
 public:
 	userVertexObject(systemWideInfo<K> * inSysInfo,
 			std::map<char *, IAggregator<A> *> * inAggContainer,
+			std::map<char *, A> * inTmpAggContainer,
 			boost::mutex * inAggLock,
 			std::queue<graphMutatorStore<K> >* inPendingMutations) {
 		sysInfo = inSysInfo;
 		aggContainer = inAggContainer;
+		tmpAggContainer=inTmpAggContainer;
 		pendingMutations = inPendingMutations;
 		aggLock = inAggLock;
 	}
@@ -40,7 +43,7 @@ public:
 		aggLock->unlock();
 	}
 	A getAggregatorValue(char * aggName) {
-		return aggContainer->at(aggName)->getValue();
+		return tmpAggContainer[aggName];
 	}
 	K getMaxVertex() {
 		return sysInfo->getMaxVertex();

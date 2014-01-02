@@ -519,6 +519,19 @@ public:
 
 		if (sysGroupMessageCounter[StartSS] == PECount) {
 			sysGroupMessageCounter[StartSS] = 0;
+
+			//copy tmp aggregator values
+			dataPtr.aggContainerLock.lock();
+
+			typename std::map<char *, IAggregator<A> *>::iterator it;
+			for (it = dataPtr.aggContainer.begin(); it != dataPtr.aggContainer.end(); it++) {
+					IAggregator<A> * usrAggClass = (*it).second;
+					dataPtr.tmpAggContainer[(*it).first] = usrAggClass->getValue();
+					usrAggClass->createInitialValue();
+			}
+			dataPtr.aggContainerLock.unlock();
+			///////////////////////////////
+
 			runSingleSuperStep();
 		}
 	}
@@ -924,6 +937,7 @@ public:
 			strncpy(aggKey, (*it).first, length);
 			if (strcmp(ptr, aggKey) == 0) {
 				IAggregator<A> * usrAggClass = (*it).second;
+				usrAggClass->setValue(dataPtr.tmpAggContainer[(*it).first]);
 				usrAggClass->aggregate(value.getTag());
 			}
 
@@ -970,7 +984,7 @@ public:
 		dm = new dataManager<K, V1, M, A>(subGraphContainer[myRank]->filePath,
 				subGraphContainer[myRank]->fileSystemType, storageType);
 		cm = new computeManager<K, V1, M, A>(dm, dataPtr.sc, dataPtr.uc, userST,
-				&dataPtr.sysInfo, &superStepCounter, &(dataPtr.aggContainer),
+				&dataPtr.sysInfo, &superStepCounter, &(dataPtr.aggContainer),&(dataPtr.tmpAggContainer),
 				&(dataPtr.aggContainerLock), groupVoteToHalt, withCombiner);
 		cm->setCombiner(userCombiner);
 		dm->setComputeRank(myRank);

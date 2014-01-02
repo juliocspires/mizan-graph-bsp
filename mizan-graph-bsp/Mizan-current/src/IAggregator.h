@@ -15,6 +15,7 @@ protected:
 public:
 	IAggregator(){}
 	virtual void aggregate(A value)=0;
+	virtual void createInitialValue()=0;
 	A getValue(){
 		return aggValue;
 	}

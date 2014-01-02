@@ -22,6 +22,7 @@
 #include "algorithms/AdSim.h"
 #include "tools/argParser.h"
 #include "algorithms/maxAggregator.h"
+#include "algorithms/SSSP.h"
 #include "general.h"
 
 using namespace std;
@@ -120,6 +121,31 @@ int main(int argc, char** argv) {
 		myWorkerID = mmk->getPEID();
 		delete mmk;
 	}
+	else if (myArgs.algorithm == 5) {
+		    // NOTE: this should be FALSE so halted vertices wake on incoming message
+		    groupVoteToHalt = false;
+		    storageType = OutNbrStore;       // only store outgoing edge values
+
+		    // XXX: source ID is hard coded
+		    SSSP sssp(mLong(0), myArgs.superSteps);
+
+		    Mizan<mLong, mLong, mLong, mLong> * mmk =
+		      new Mizan<mLong, mLong, mLong, mLong>(myArgs.communication, &sssp, storageType,
+		                                            inputBaseFile, myArgs.clusterSize,
+		                                            myArgs.fs, myArgs.migration);
+
+		    // use combiner for better network efficiency
+		    SSSPCombiner ssspc;
+		    mmk->registerMessageCombiner(&ssspc);
+
+		    mmk->setVoteToHalt(groupVoteToHalt);
+
+		    mmk->run(argc, argv);
+		    myWorkerID = mmk->getPEID();
+		    delete mmk;
+
+		  }
+
 
 #ifdef Verbose
 	if (myWorkerID == 0) {

@@ -60,6 +60,7 @@ private:
 	boost::mutex blockSSLock;
 
 	std::map<char *, IAggregator<A> *> * aggContainer;
+	std::map<char *, A> * tmpAggContainer;
 	std::queue<mObject<K, V1, M> *> rejectedMessageQueue;
 
 	std::map<int, float> ssAveResTime;
@@ -127,6 +128,7 @@ public:
 			userComm<K, V1, M, A> * inUserComm, IsuperStep<K, V1, M, A> * inST,
 			systemWideInfo<K> * inSysInfo, int * inPtrSS,
 			std::map<char *, IAggregator<A> *> * inAggContainer,
+			std::map<char *, A> * inTmpAggContainer,
 			boost::mutex * inAggLock, bool inGroupVoteToHalt,
 			bool inWithCombiner) {
 
@@ -140,6 +142,7 @@ public:
 		sysInfo = inSysInfo;
 		superStepCnt = inPtrSS;
 		aggContainer = inAggContainer;
+		tmpAggContainer=inTmpAggContainer;
 		cnt = 0;
 		groupVoteToHalt = inGroupVoteToHalt;
 		aggLock = inAggLock;
@@ -293,7 +296,7 @@ public:
 		const clock_t begin_time = clock();
 #endif
 
-		userVertexObject<K, V1, M, A> aaa(sysInfo, aggContainer, aggLock,
+		userVertexObject<K, V1, M, A> aaa(sysInfo, aggContainer,tmpAggContainer, aggLock,
 				&pendingMutations);
 		for (int i = 0; i < myDataManager->vertexSetSize(); i++) {
 			mObject<K, V1, M> * kkk = myDataManager->getVertexObjByPos(i);
@@ -531,7 +534,7 @@ public:
 		manageBlockSS_lock.unlock();
 	}
 	bool singleVertexStep(mObject<K, V1, M> * vertexObj) {
-		userVertexObject<K, V1, M, A> aaa(sysInfo, aggContainer, aggLock,
+		userVertexObject<K, V1, M, A> aaa(sysInfo, aggContainer,tmpAggContainer, aggLock,
 				&pendingMutations);
 		return singleVertexStep(vertexObj, &aaa);
 	}
@@ -577,7 +580,7 @@ public:
 
 		bool haltPE = true;
 
-		userVertexObject<K, V1, M, A> aaa(sysInfo, aggContainer, aggLock,
+		userVertexObject<K, V1, M, A> aaa(sysInfo, aggContainer,tmpAggContainer, aggLock,
 				&pendingMutations);
 
 		int haltTrue = 0;

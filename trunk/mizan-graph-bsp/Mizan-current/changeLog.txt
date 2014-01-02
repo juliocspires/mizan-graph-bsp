@@ -19,3 +19,5 @@ Notes:
 	3- Cleaning up some comments
 	4- Adding support for edge reading
 	5- Fixing Mizan.h from unsynchronized termination caused by LateStat
+	6- Fix aggregator wrong behaviour
+	7- Improving getTotalSystemMemory and getAvaliableSystemMemory in dataManager.h

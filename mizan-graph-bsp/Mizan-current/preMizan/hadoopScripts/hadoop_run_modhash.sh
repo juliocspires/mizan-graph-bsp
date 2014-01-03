@@ -1,7 +1,7 @@
-if [ $# -ne 3 ]
+if [ $# -ne 4 ]
 then
 	echo $?
-	echo "Command error, input format = $0 [graph_name in "hdfs:input/"] [partition size] [duplicate outDegree]"
+	echo "Command error, input format = $0 [graph_name in "hdfs:input/"] [partition size] [duplicate outDegree] [Vertex weight count]"
 	exit -1
 fi
 

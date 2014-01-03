@@ -21,3 +21,5 @@ Notes:
 	5- Fixing Mizan.h from unsynchronized termination caused by LateStat
 	6- Fix aggregator wrong behaviour
 	7- Improving getTotalSystemMemory and getAvaliableSystemMemory in dataManager.h
+	8- Fixing project setup
+	9- fix hadoop_run_modhash.sh script to accept edge weighs

@@ -30,6 +30,7 @@
 									<listOptionValue builtIn="false" value="$(BOOST_ROOT)/include"/>
 									<listOptionValue builtIn="false" value="$(JAVA_HOME)/include"/>
 									<listOptionValue builtIn="false" value="$(JAVA_HOME)/include/linux"/>
+									<listOptionValue builtIn="false" value="$(JAVA_HOME)/include/darwin"/>
 									<listOptionValue builtIn="false" value="$(HADOOP_HOME)/src/c++/libhdfs"/>
 								</option>
 								<option id="gnu.cpp.compiler.option.warnings.allwarn.2146170580" name="All warnings (-Wall)" superClass="gnu.cpp.compiler.option.warnings.allwarn" value="false" valueType="boolean"/>
@@ -46,6 +47,8 @@
 								<option id="gnu.cpp.link.option.libs.1106570082" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
 									<listOptionValue builtIn="false" value="hdfs"/>
 									<listOptionValue builtIn="false" value="boost_thread"/>
+									<listOptionValue builtIn="false" value="boost_system"/>
+									<listOptionValue builtIn="false" value="boost_program_options"/>
 								</option>
 								<option id="gnu.cpp.link.option.paths.993919220" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths">
 									<listOptionValue builtIn="false" value="$(BOOST_ROOT)/lib"/>
@@ -100,6 +103,7 @@
 									<listOptionValue builtIn="false" value="$(BOOST_ROOT)/include"/>
 									<listOptionValue builtIn="false" value="$(JAVA_HOME)/include"/>
 									<listOptionValue builtIn="false" value="$(JAVA_HOME)/include/linux"/>
+									<listOptionValue builtIn="false" value="$(JAVA_HOME)/include/darwin"/>
 									<listOptionValue builtIn="false" value="$(HADOOP_HOME)/src/c++/libhdfs"/>
 								</option>
 								<option id="gnu.cpp.compiler.option.warnings.allwarn.1830556947" name="All warnings (-Wall)" superClass="gnu.cpp.compiler.option.warnings.allwarn" value="false" valueType="boolean"/>
@@ -115,8 +119,9 @@
 							<tool command="mpic++" commandLinePattern="${COMMAND} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} ${INPUTS}" errorParsers="org.eclipse.cdt.core.GLDErrorParser" id="cdt.managedbuild.tool.gnu.cpp.linker.exe.debug.951524160" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.exe.debug">
 								<option id="gnu.cpp.link.option.libs.129969738" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
 									<listOptionValue builtIn="false" value="hdfs"/>
-									<listOptionValue builtIn="false" value="boost_program_options"/>
 									<listOptionValue builtIn="false" value="boost_thread"/>
+									<listOptionValue builtIn="false" value="boost_system"/>
+									<listOptionValue builtIn="false" value="boost_program_options"/>
 								</option>
 								<option id="gnu.cpp.link.option.paths.1558338917" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths">
 									<listOptionValue builtIn="false" value="$(BOOST_ROOT)/lib"/>
@@ -174,4 +179,3 @@
 		</scannerConfigBuildInfo>
 	</storageModule>
 </cproject>
-

@@ -60,7 +60,7 @@ public:
 				"partition,p", boost::program_options::value<int>(),
 				"Partitioning Type:\n\t 1)Hash (default),\n\t 2)range")(
 				"user,u", boost::program_options::value<string>(),
-				"Linux user name, required in case of\n using option (-fs 1)")(
+				"Linux user name, required in case of\n using option (--fs 1)")(
 				"migration,m", boost::program_options::value<int>(),
 				"(Advanced Option) Dynamic load balancing type:\n\t 1)none (default),\n\t 2)Delayed Migration,\n\t 3)Mix Migration Mode,\n\t 4)Pregel Work Stealing");
 
@@ -94,12 +94,6 @@ public:
 				fileSystem = (vm["fs"].as<int>());
 				if (fileSystem == 1) {
 					args.fs = HDFS;
-					if ((args.fs == HDFS && args.hdfsUserName.length() == 0)) {
-						std::cerr
-								<< "ERROR: You have to specify the linux current user by using (-u username)."
-								<< std::endl;
-						exit(-1);
-					}
 				} else if (fileSystem == 2) {
 					args.fs = OS_DISK_ALL;
 				} else {
@@ -116,15 +110,7 @@ public:
 				}
 			}
 			if (vm.count("user")) {
-				if (args.fs == HDFS) {
-					args.hdfsUserName.append(vm["user"].as<std::string>());
-				} else {
-					std::cerr
-							<< "ERROR: You have to specify HDFS file System through --fs."
-							<< std::endl;
-					exit(-1);
-				}
-				//args.fs = HDFS;
+				args.hdfsUserName.append(vm["user"].as<std::string>());
 			}
 
 			if (vm.count("migration")) {
@@ -139,12 +125,12 @@ public:
 					args.migration = PregelWorkStealing;
 				}
 			}
-			/*if ((args.fs == HDFS && args.hdfsUserName.length() == 0) || args.fs == NOFS) {
+			if ((args.fs == HDFS && args.hdfsUserName.length() == 0) || args.fs == NOFS) {
 			 std::cerr
 			 << "ERROR: You have to specify the linux current user by using (-u username)."
 			 << std::endl;
 			 exit(-1);
-			 }*/
+			 }
 
 			boost::program_options::notify(vm);
 		} catch (boost::program_options::error& e) {

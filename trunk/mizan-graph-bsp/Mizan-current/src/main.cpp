@@ -22,6 +22,7 @@
 #include "algorithms/AdSim.h"
 #include "tools/argParser.h"
 #include "algorithms/maxAggregator.h"
+#include "algorithms/sumAggregator.h"
 #include "algorithms/SSSP.h"
 #include "general.h"
 
@@ -70,6 +71,10 @@ int main(int argc, char** argv) {
 		char * maxAgg = "maxAggregator";
 		maxAggregator maxi;
 		mmk->registerAggregator(maxAgg, &maxi);
+
+		char * sumAgg = "sumAggregator";
+		sumAggregator sumi;
+				mmk->registerAggregator(sumAgg, &sumi);
 
 		mmk->run(argc, argv);
 

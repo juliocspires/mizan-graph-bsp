@@ -56,6 +56,19 @@ public:
 		double newVal = 0;
 		double c = 0.85;
 
+		/*data->aggregate("maxAggregator",mLong(data->getVertexID().getValue()-data->getCurrentSS()));
+		if(data->getVertexID().getValue() == 0){
+			//cout << "Agg set Max : " << (data->getVertexID().getValue()-data->getCurrentSS()) << endl;
+			//cout << "Agg get Max : " << data->getAggregatorValue("maxAggregator").getValue() << endl;
+		}
+
+		if(data->getVertexID().getValue() % 2 ==0){
+			data->aggregate("sumAggregator",mLong(1));
+		}
+		if(data->getVertexID().getValue() == 0){
+			cout << data->getAggregatorValue("sumAggregator").getValue() << endl;
+		}*/
+
 		if (data->getCurrentSS() > 1) {
 			while (messages->hasNext()) {
 				double tmp = messages->getNext().getValue();

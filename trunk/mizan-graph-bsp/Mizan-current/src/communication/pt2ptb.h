@@ -104,8 +104,7 @@ private:
 		DATA_CMDS dCode;
 		memcpy(&dCode, recv_buf, sizeof(int));
 		recv_buf += sizeof(int);
-				cout << "(" << rank << ") Received -- " << DATA_CMDS_strings[dCode]
-						<< " message from " << from_rank << endl;
+
 		while (dCode != ENDDMSG) {
 
 			if (dCode == SSdata) {
@@ -1109,9 +1108,7 @@ public:
 			boost::mutex::scoped_lock test_lock = boost::mutex::scoped_lock(
 					this->DATAbuff);
 			bool can_insert = validate_DATAbuffer_insertion(buf_len, PEdest);
-			
-			cout << "(" << rank << ") can_insert:" <<can_insert << endl;
-			cout.flush();
+
 			
 			if (can_insert) {
 				memcpy(DATA_buffers_cursors[PEdest], buf, buf_len);

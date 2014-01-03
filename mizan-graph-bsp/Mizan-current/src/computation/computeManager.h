@@ -305,7 +305,7 @@ public:
 		}
 
 		//cout << "\t-PE" << sc->getRank() << " sending FinishInit" << endl;
-		aggregate();
+		//aggregate();
 		sc->BroadcastSysMessage(FinishInit, AFTER_DATABUFFER_PRIORITY);
 		//cout << "\t-PE" << sc->getRank() << " finish sending FinishInit."
 		//<< endl;
@@ -472,7 +472,7 @@ public:
 		}
 	}
 	void postSS(bool haltPE) {
-		aggregate();
+		//aggregate();
 		clearPendingMessages();
 
 		//sumOutCommGlobal = uc->getGlobal();

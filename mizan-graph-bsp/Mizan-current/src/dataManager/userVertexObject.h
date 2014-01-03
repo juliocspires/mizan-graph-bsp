@@ -43,7 +43,7 @@ public:
 		aggLock->unlock();
 	}
 	A getAggregatorValue(char * aggName) {
-		return tmpAggContainer[aggName];
+		return tmpAggContainer->at(aggName);
 	}
 	K getMaxVertex() {
 		return sysInfo->getMaxVertex();

@@ -243,6 +243,7 @@ public:
 		//cout << "PE" << myRank << " recvFinishInit()" << std::endl;
 		if (sysGroupMessageCounter.find(FinishInit)->second == PECount) {
 			superStepCounter++;
+			cm->aggregate();
 			dataPtr.sc->BroadcastSysMessage(StartSS, INSTANT_PRIORITY);
 		}
 	}
@@ -349,6 +350,7 @@ public:
 
 		cm->gatherStats();
 		cm->performDataMutations();
+		cm->aggregate();
 		bool subTerminate = cm->cleanUp(enableVertices);
 
 		mLong * array = new mLong[8];
@@ -929,6 +931,8 @@ public:
 
 		dataPtr.aggContainerLock.lock();
 
+		dataPtr.aggCounter[ptr] = dataPtr.aggCounter[ptr]+1;
+
 		typename std::map<char *, IAggregator<A> *>::iterator it;
 		for (it = dataPtr.aggContainer.begin();
 				it != dataPtr.aggContainer.end(); it++) {
@@ -937,10 +941,15 @@ public:
 			strncpy(aggKey, (*it).first, length);
 			if (strcmp(ptr, aggKey) == 0) {
 				IAggregator<A> * usrAggClass = (*it).second;
-				usrAggClass->setValue(dataPtr.tmpAggContainer[(*it).first]);
+				if(dataPtr.aggCounter[ptr]==1){
+					usrAggClass->setValue(dataPtr.tmpAggContainer[(*it).first]);
+				}
 				usrAggClass->aggregate(value.getTag());
 			}
 
+		}
+		if(dataPtr.aggCounter[ptr]==PECount){
+			dataPtr.aggCounter[ptr]=0;
 		}
 		dataPtr.aggContainerLock.unlock();
 	}
@@ -1039,6 +1048,7 @@ public:
 	}
 	void registerAggregator(char * aggName, IAggregator<A> * aggImp) {
 		dataPtr.aggContainer[aggName] = aggImp;
+		dataPtr.aggCounter[aggName] = 0;
 	}
 	void wait() {
 		(tm.tp).wait();

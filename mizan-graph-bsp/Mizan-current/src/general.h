@@ -22,6 +22,7 @@ template<class K, class V1, class M, class A>
 struct systemDataPointer {
 	std::map<char *, IAggregator<A> *> aggContainer;
 	std::map<char *, A> tmpAggContainer;
+	std::map<char *,int> aggCounter;
 	boost::mutex aggContainerLock;
 	systemWideInfo<K> sysInfo;
 	sysComm<K, V1, M, A> * sc;

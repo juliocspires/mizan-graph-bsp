@@ -339,7 +339,8 @@ public:
 	void recvMigrateBarrier() {
 		if (sysGroupMessageCounter[MigrateBarrier] == PECount) {
 			sysGroupMessageCounter[MigrateBarrier] = 0;
-			dataPtr.sc->BroadcastSysMessage(StartSS, AFTER_DATABUFFER_PRIORITY);
+			cm->aggregate();
+			//dataPtr.sc->BroadcastSysMessage(StartSS, AFTER_DATABUFFER_PRIORITY);
 		}
 	}
 
@@ -527,10 +528,11 @@ public:
 			dataPtr.aggContainerLock.lock();
 
 			typename std::map<char *, IAggregator<A> *>::iterator it;
-			for (it = dataPtr.aggContainer.begin(); it != dataPtr.aggContainer.end(); it++) {
-					IAggregator<A> * usrAggClass = (*it).second;
-					dataPtr.tmpAggContainer[(*it).first] = usrAggClass->getValue();
-					usrAggClass->createInitialValue();
+			for (it = dataPtr.aggContainer.begin();
+					it != dataPtr.aggContainer.end(); it++) {
+				IAggregator<A> * usrAggClass = (*it).second;
+				dataPtr.tmpAggContainer[(*it).first] = usrAggClass->getValue();
+				usrAggClass->createInitialValue();
 			}
 			dataPtr.aggContainerLock.unlock();
 			///////////////////////////////
@@ -924,39 +926,58 @@ public:
 
 		dataPtr.sysInfo.addCounter("_Graph_Vertex_Size", 0);
 	}
-	void recvAggregator(int size, char * data) {
+	std::vector<int> tmpStoreA;
+	std::vector<char *> tmpStoreB;
+	void recvAggregator(int sizex, char * datax) {
 		//cout << "PE" << myRank << " recvAggregator()" << std::endl;
-		mKCharArrayPair<A> value;
-		value.byteDecode(size, data);
-		char * ptr = value.getValue().getValue();
 
-		dataPtr.aggContainerLock.lock();
+		tmpStoreA.push_back(sizex);
+		tmpStoreB.push_back(datax);
 
-		dataPtr.aggCounter[ptr] = dataPtr.aggCounter[ptr]+1;
+		if (tmpStoreA.size() == (PECount * dataPtr.aggContainer.size())) {
+			while (!tmpStoreA.empty()) {
+				int size = tmpStoreA.back();
+				char * data = tmpStoreB.back();
 
-		typename std::map<char *, IAggregator<A> *>::iterator it;
-		for (it = dataPtr.aggContainer.begin();
-				it != dataPtr.aggContainer.end(); it++) {
-			int length = strlen((*it).first);
-			char * aggKey = (char*) calloc(length + 1, sizeof(char));
-			strncpy(aggKey, (*it).first, length);
-			if (strcmp(ptr, aggKey) == 0) {
-				IAggregator<A> * usrAggClass = (*it).second;
-				if(dataPtr.aggCounter[ptr]==1){
-					usrAggClass->setValue(dataPtr.tmpAggContainer[(*it).first]);
+				tmpStoreA.pop_back();
+				tmpStoreB.pop_back();
+
+				mKCharArrayPair<A> value;
+				value.byteDecode(size, data);
+				char * ptr = value.getValue().getValue();
+
+				dataPtr.aggContainerLock.lock();
+
+				dataPtr.aggCounter[ptr] = dataPtr.aggCounter[ptr] + 1;
+
+				typename std::map<char *, IAggregator<A> *>::iterator it;
+				for (it = dataPtr.aggContainer.begin();
+						it != dataPtr.aggContainer.end(); it++) {
+					int length = strlen((*it).first);
+					char * aggKey = (char*) calloc(length + 1, sizeof(char));
+					strncpy(aggKey, (*it).first, length);
+					if (strcmp(ptr, aggKey) == 0) {
+						IAggregator<A> * usrAggClass = (*it).second;
+						if (dataPtr.aggCounter[ptr] == 1) {
+							usrAggClass->setValue(
+									dataPtr.tmpAggContainer[(*it).first]);
+						}
+						usrAggClass->aggregate(value.getTag());
+					}
+
 				}
-				usrAggClass->aggregate(value.getTag());
+				if (dataPtr.aggCounter[ptr] == PECount) {
+					//cout << "PE"<< myRank << " [ptr] " << ptr << " = " << dataPtr.aggCounter[ptr] << endl;
+					dataPtr.aggCounter[ptr] = 0;
+				}
+				dataPtr.aggContainerLock.unlock();
+				if (sysGroupMessageCounter[Aggregator]
+						== (PECount * dataPtr.aggContainer.size())) {
+					sysGroupMessageCounter[Aggregator] = 0;
+					dataPtr.sc->BroadcastSysMessage(StartSS,
+							AFTER_DATABUFFER_PRIORITY);
+				}
 			}
-
-		}
-		if(dataPtr.aggCounter[ptr]==PECount){
-			//cout << "PE"<< myRank << " [ptr] " << ptr << " = " << dataPtr.aggCounter[ptr] << endl;
-			dataPtr.aggCounter[ptr]=0;
-		}
-		dataPtr.aggContainerLock.unlock();
-		if(sysGroupMessageCounter[Aggregator] == (PECount * dataPtr.aggContainer.size())){
-			sysGroupMessageCounter[Aggregator]=0;
-			dataPtr.sc->BroadcastSysMessage(StartSS, AFTER_DATABUFFER_PRIORITY);
 		}
 	}
 	void processSysCommand(SYS_CMDS message) {
@@ -999,8 +1020,9 @@ public:
 		dm = new dataManager<K, V1, M, A>(subGraphContainer[myRank]->filePath,
 				subGraphContainer[myRank]->fileSystemType, storageType);
 		cm = new computeManager<K, V1, M, A>(dm, dataPtr.sc, dataPtr.uc, userST,
-				&dataPtr.sysInfo, &superStepCounter, &(dataPtr.aggContainer),&(dataPtr.tmpAggContainer),
-				&(dataPtr.aggContainerLock), groupVoteToHalt, withCombiner);
+				&dataPtr.sysInfo, &superStepCounter, &(dataPtr.aggContainer),
+				&(dataPtr.tmpAggContainer), &(dataPtr.aggContainerLock),
+				groupVoteToHalt, withCombiner);
 		cm->setCombiner(userCombiner);
 		dm->setComputeRank(myRank);
 

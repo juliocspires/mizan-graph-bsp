@@ -244,7 +244,7 @@ public:
 		if (sysGroupMessageCounter.find(FinishInit)->second == PECount) {
 			superStepCounter++;
 			cm->aggregate();
-			dataPtr.sc->BroadcastSysMessage(StartSS, INSTANT_PRIORITY);
+			//dataPtr.sc->BroadcastSysMessage(StartSS, INSTANT_PRIORITY);
 		}
 	}
 	bool stealEnabled;
@@ -350,7 +350,7 @@ public:
 
 		cm->gatherStats();
 		cm->performDataMutations();
-		cm->aggregate();
+
 		bool subTerminate = cm->cleanUp(enableVertices);
 
 		mLong * array = new mLong[8];
@@ -483,7 +483,8 @@ public:
 			dataPtr.sc->BroadcastSysMessage(MigrateBarrier,
 					AFTER_DATABUFFER_PRIORITY);
 		} else {
-			dataPtr.sc->BroadcastSysMessage(StartSS, AFTER_DATABUFFER_PRIORITY);
+			cm->aggregate();
+			//dataPtr.sc->BroadcastSysMessage(StartSS, AFTER_DATABUFFER_PRIORITY);
 		}
 	}
 	void recvStartSS() {
@@ -949,9 +950,14 @@ public:
 
 		}
 		if(dataPtr.aggCounter[ptr]==PECount){
+			//cout << "PE"<< myRank << " [ptr] " << ptr << " = " << dataPtr.aggCounter[ptr] << endl;
 			dataPtr.aggCounter[ptr]=0;
 		}
 		dataPtr.aggContainerLock.unlock();
+		if(sysGroupMessageCounter[Aggregator] == (PECount * dataPtr.aggContainer.size())){
+			sysGroupMessageCounter[Aggregator]=0;
+			dataPtr.sc->BroadcastSysMessage(StartSS, AFTER_DATABUFFER_PRIORITY);
+		}
 	}
 	void processSysCommand(SYS_CMDS message) {
 		sysGroupMessageCounter[message]++;

@@ -468,6 +468,7 @@ public:
 			strncpy(aggKey, (*it).first, length);
 			A tag = (*it).second->getValue();
 			mKCharArrayPair<A> value(tag, length + 1, aggKey);
+			//cout << "Send Aggregator : " << aggKey << " with value " << tag.getValue() << endl;
 			sc->BroadcastSysMessageValue(Aggregator, value, INSTANT_PRIORITY);
 		}
 	}

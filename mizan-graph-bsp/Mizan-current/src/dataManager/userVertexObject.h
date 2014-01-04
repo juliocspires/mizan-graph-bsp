@@ -26,12 +26,11 @@ private:
 public:
 	userVertexObject(systemWideInfo<K> * inSysInfo,
 			std::map<char *, IAggregator<A> *> * inAggContainer,
-			std::map<char *, A> * inTmpAggContainer,
-			boost::mutex * inAggLock,
+			std::map<char *, A> * inTmpAggContainer, boost::mutex * inAggLock,
 			std::queue<graphMutatorStore<K> >* inPendingMutations) {
 		sysInfo = inSysInfo;
 		aggContainer = inAggContainer;
-		tmpAggContainer=inTmpAggContainer;
+		tmpAggContainer = inTmpAggContainer;
 		pendingMutations = inPendingMutations;
 		aggLock = inAggLock;
 	}
@@ -39,11 +38,34 @@ public:
 	}
 	void aggregate(char * aggName, A value) {
 		aggLock->lock();
-		aggContainer->at(aggName)->aggregate(value);
-		aggLock->unlock();
+		typename std::map<char *, IAggregator<A> *>::iterator it;
+		for (it = aggContainer->begin(); it != aggContainer->end(); it++) {
+			int length = strlen((*it).first);
+			char * aggKey = (char*) calloc(length + 1, sizeof(char));
+			strncpy(aggKey, (*it).first, length);
+			if (strcmp(aggName, aggKey) == 0) {
+				aggContainer->at((*it).first)->aggregate(value);
+				free(aggKey);
+				aggLock->unlock();
+				break;
+			}
+		}
+
 	}
 	A getAggregatorValue(char * aggName) {
-		return tmpAggContainer->at(aggName);
+		typename std::map<char *, A>::iterator it;
+		for (it = tmpAggContainer->begin(); it != tmpAggContainer->end();
+				it++) {
+			int length = strlen((*it).first);
+			char * aggKey = (char*) calloc(length + 1, sizeof(char));
+			strncpy(aggKey, (*it).first, length);
+			if (strcmp(aggName, aggKey) == 0) {
+				free(aggKey);
+				return tmpAggContainer->at((*it).first);
+			}
+
+		}
+
 	}
 	K getMaxVertex() {
 		return sysInfo->getMaxVertex();

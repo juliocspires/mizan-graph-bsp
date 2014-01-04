@@ -926,7 +926,10 @@ public:
 		for (it = dataPtr.aggContainer.begin();
 				it != dataPtr.aggContainer.end(); it++) {
 			IAggregator<A> * usrAggClass = (*it).second;
-			dataPtr.tmpAggContainer[(*it).first] = usrAggClass->getValue();
+			//cout << "PE" << myRank << " for " << (*it).first << " usrAggClass.getValue() " << usrAggClass->getValue().getValue() << endl;
+			//cout << "PE" << myRank << " for " << (*it).first << " before dataPtr.tmpAggContainer " << dataPtr.tmpAggContainer[(*it).first].getValue() << endl;
+			dataPtr.tmpAggContainer[(*it).first] = usrAggClass->getValue(); //[(*it).first] = usrAggClass->getValue();
+			//cout << "PE" << myRank << " for " << (*it).first << " after dataPtr.tmpAggContainer " << dataPtr.tmpAggContainer[(*it).first].getValue() << endl;
 			usrAggClass->createInitialValue();
 		}
 		dataPtr.aggContainerLock.unlock();
@@ -934,8 +937,10 @@ public:
 	void recvAggregator(int sizex, char * datax) {
 		//cout << "PE" << myRank << " recvAggregator()" << std::endl;
 
+		char * copyDatax = (char *) calloc(sizex,sizeof(char));
+		memcpy(copyDatax,datax,sizex);
 		tmpStoreA.push_back(sizex);
-		tmpStoreB.push_back(datax);
+		tmpStoreB.push_back(copyDatax);
 
 		if (tmpStoreA.size() == (PECount * dataPtr.aggContainer.size())) {
 			while (!tmpStoreA.empty()) {
@@ -947,11 +952,13 @@ public:
 
 				mKCharArrayPair<A> value;
 				value.byteDecode(size, data);
-				char * ptr = value.getValue().getValue();
+				char * ptrX = value.getValue().getValue();
+
+				//cout << "PE" << myRank << " recieved ptr " << ptrX << " and value = "<< value.getTag().getValue() << endl;
 
 				dataPtr.aggContainerLock.lock();
 
-				dataPtr.aggCounter[ptr] = dataPtr.aggCounter[ptr] + 1;
+
 
 				typename std::map<char *, IAggregator<A> *>::iterator it;
 				for (it = dataPtr.aggContainer.begin();
@@ -959,20 +966,36 @@ public:
 					int length = strlen((*it).first);
 					char * aggKey = (char*) calloc(length + 1, sizeof(char));
 					strncpy(aggKey, (*it).first, length);
-					if (strcmp(ptr, aggKey) == 0) {
+					if (strcmp(ptrX, aggKey) == 0) {
+						dataPtr.aggCounter[(*it).first] = dataPtr.aggCounter[(*it).first] + 1;
+						//cout << "PE" << myRank << " " << ptr << " == " << aggKey << endl;
 						IAggregator<A> * usrAggClass = (*it).second;
-						if (dataPtr.aggCounter[ptr] == 1) {
-							usrAggClass->setValue(
-									dataPtr.tmpAggContainer[(*it).first]);
+
+						if (dataPtr.aggCounter[(*it).first] == 1) {
+							//cout << "PE" << myRank << " dataPtr.tmpAggContainer[(*it).first]" << endl;
+							usrAggClass->setValue(dataPtr.tmpAggContainer[(*it).first]);
 						}
+						else if (dataPtr.aggCounter[(*it).first] == PECount) {
+							dataPtr.aggCounter[(*it).first] = 0;
+						}
+
+						/*cout << "PE" << myRank << " aggregator " << ptrX
+																 << " old value "
+																 << usrAggClass->getValue().getValue() << endl;
+*/
 						usrAggClass->aggregate(value.getTag());
+
+						/*cout << "PE" << myRank << " aggregator " << ptrX
+										 << " new value "
+										 << usrAggClass->getValue().getValue() << endl;
+*/
+						//dataPtr.aggContainer[aggKey] = usrAggClass;
+						//break;
 					}
+					free(aggKey);
 
 				}
-				if (dataPtr.aggCounter[ptr] == PECount) {
-					//cout << "PE"<< myRank << " [ptr] " << ptr << " = " << dataPtr.aggCounter[ptr] << endl;
-					dataPtr.aggCounter[ptr] = 0;
-				}
+
 				dataPtr.aggContainerLock.unlock();
 				if (sysGroupMessageCounter[Aggregator]
 						== (PECount * dataPtr.aggContainer.size())) {
@@ -980,6 +1003,7 @@ public:
 					dataPtr.sc->BroadcastSysMessage(StartSS,
 							AFTER_DATABUFFER_PRIORITY);
 				}
+				free(data);
 			}
 		}
 	}
@@ -1058,7 +1082,7 @@ public:
 		if (myRank == 0) {
 			std::cout << "Starting user init.." << endl;
 		}
-		copyAggregator();
+		//copyAggregator();
 		(tm.tp).schedule(
 				boost::bind(&computeManager<K, V1, M, A>::userInit, cm));
 	}
@@ -1079,7 +1103,9 @@ public:
 		userCombiner = combiner;
 	}
 	void registerAggregator(char * aggName, IAggregator<A> * aggImp) {
+		//cout << "registering " << aggName << endl;
 		dataPtr.aggContainer[aggName] = aggImp;
+		dataPtr.tmpAggContainer[aggName] = aggImp->getValue();
 		dataPtr.aggCounter[aggName] = 0;
 	}
 	void wait() {

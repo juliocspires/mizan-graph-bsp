@@ -525,16 +525,7 @@ public:
 			sysGroupMessageCounter[StartSS] = 0;
 
 			//copy tmp aggregator values
-			dataPtr.aggContainerLock.lock();
-
-			typename std::map<char *, IAggregator<A> *>::iterator it;
-			for (it = dataPtr.aggContainer.begin();
-					it != dataPtr.aggContainer.end(); it++) {
-				IAggregator<A> * usrAggClass = (*it).second;
-				dataPtr.tmpAggContainer[(*it).first] = usrAggClass->getValue();
-				usrAggClass->createInitialValue();
-			}
-			dataPtr.aggContainerLock.unlock();
+			copyAggregator();
 			///////////////////////////////
 
 			runSingleSuperStep();
@@ -928,6 +919,18 @@ public:
 	}
 	std::vector<int> tmpStoreA;
 	std::vector<char *> tmpStoreB;
+	void copyAggregator() {
+		dataPtr.aggContainerLock.lock();
+
+		typename std::map<char *, IAggregator<A> *>::iterator it;
+		for (it = dataPtr.aggContainer.begin();
+				it != dataPtr.aggContainer.end(); it++) {
+			IAggregator<A> * usrAggClass = (*it).second;
+			dataPtr.tmpAggContainer[(*it).first] = usrAggClass->getValue();
+			usrAggClass->createInitialValue();
+		}
+		dataPtr.aggContainerLock.unlock();
+	}
 	void recvAggregator(int sizex, char * datax) {
 		//cout << "PE" << myRank << " recvAggregator()" << std::endl;
 
@@ -1055,6 +1058,7 @@ public:
 		if (myRank == 0) {
 			std::cout << "Starting user init.." << endl;
 		}
+		copyAggregator();
 		(tm.tp).schedule(
 				boost::bind(&computeManager<K, V1, M, A>::userInit, cm));
 	}

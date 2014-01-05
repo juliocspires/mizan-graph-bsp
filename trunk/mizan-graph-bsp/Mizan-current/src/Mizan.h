@@ -975,7 +975,7 @@ public:
 							//cout << "PE" << myRank << " dataPtr.tmpAggContainer[(*it).first]" << endl;
 							usrAggClass->setValue(dataPtr.tmpAggContainer[(*it).first]);
 						}
-						else if (dataPtr.aggCounter[(*it).first] == PECount) {
+						if (dataPtr.aggCounter[(*it).first] == PECount) {
 							dataPtr.aggCounter[(*it).first] = 0;
 						}
 

@@ -243,8 +243,11 @@ public:
 		//cout << "PE" << myRank << " recvFinishInit()" << std::endl;
 		if (sysGroupMessageCounter.find(FinishInit)->second == PECount) {
 			superStepCounter++;
-			cm->aggregate();
-			//dataPtr.sc->BroadcastSysMessage(StartSS, INSTANT_PRIORITY);
+			if (dataPtr.aggContainer.size() > 0) {
+				cm->aggregate();
+			} else {
+				dataPtr.sc->BroadcastSysMessage(StartSS, INSTANT_PRIORITY);
+			}
 		}
 	}
 	bool stealEnabled;
@@ -339,7 +342,12 @@ public:
 	void recvMigrateBarrier() {
 		if (sysGroupMessageCounter[MigrateBarrier] == PECount) {
 			sysGroupMessageCounter[MigrateBarrier] = 0;
-			cm->aggregate();
+			if (dataPtr.aggContainer.size() > 0) {
+				cm->aggregate();
+			} else {
+				dataPtr.sc->BroadcastSysMessage(StartSS,
+						AFTER_DATABUFFER_PRIORITY);
+			}
 			//dataPtr.sc->BroadcastSysMessage(StartSS, AFTER_DATABUFFER_PRIORITY);
 		}
 	}
@@ -937,8 +945,8 @@ public:
 	void recvAggregator(int sizex, char * datax) {
 		//cout << "PE" << myRank << " recvAggregator()" << std::endl;
 
-		char * copyDatax = (char *) calloc(sizex,sizeof(char));
-		memcpy(copyDatax,datax,sizex);
+		char * copyDatax = (char *) calloc(sizex, sizeof(char));
+		memcpy(copyDatax, datax, sizex);
 		tmpStoreA.push_back(sizex);
 		tmpStoreB.push_back(copyDatax);
 
@@ -958,8 +966,6 @@ public:
 
 				dataPtr.aggContainerLock.lock();
 
-
-
 				typename std::map<char *, IAggregator<A> *>::iterator it;
 				for (it = dataPtr.aggContainer.begin();
 						it != dataPtr.aggContainer.end(); it++) {
@@ -967,28 +973,30 @@ public:
 					char * aggKey = (char*) calloc(length + 1, sizeof(char));
 					strncpy(aggKey, (*it).first, length);
 					if (strcmp(ptrX, aggKey) == 0) {
-						dataPtr.aggCounter[(*it).first] = dataPtr.aggCounter[(*it).first] + 1;
+						dataPtr.aggCounter[(*it).first] =
+								dataPtr.aggCounter[(*it).first] + 1;
 						//cout << "PE" << myRank << " " << ptr << " == " << aggKey << endl;
 						IAggregator<A> * usrAggClass = (*it).second;
 
 						if (dataPtr.aggCounter[(*it).first] == 1) {
 							//cout << "PE" << myRank << " dataPtr.tmpAggContainer[(*it).first]" << endl;
-							usrAggClass->setValue(dataPtr.tmpAggContainer[(*it).first]);
+							usrAggClass->setValue(
+									dataPtr.tmpAggContainer[(*it).first]);
 						}
 						if (dataPtr.aggCounter[(*it).first] == PECount) {
 							dataPtr.aggCounter[(*it).first] = 0;
 						}
 
 						/*cout << "PE" << myRank << " aggregator " << ptrX
-																 << " old value "
-																 << usrAggClass->getValue().getValue() << endl;
-*/
+						 << " old value "
+						 << usrAggClass->getValue().getValue() << endl;
+						 */
 						usrAggClass->aggregate(value.getTag());
 
 						/*cout << "PE" << myRank << " aggregator " << ptrX
-										 << " new value "
-										 << usrAggClass->getValue().getValue() << endl;
-*/
+						 << " new value "
+						 << usrAggClass->getValue().getValue() << endl;
+						 */
 						//dataPtr.aggContainer[aggKey] = usrAggClass;
 						//break;
 					}

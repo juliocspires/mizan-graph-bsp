@@ -492,7 +492,12 @@ public:
 			dataPtr.sc->BroadcastSysMessage(MigrateBarrier,
 					AFTER_DATABUFFER_PRIORITY);
 		} else {
-			cm->aggregate();
+			if (dataPtr.aggContainer.size() > 0) {
+				cm->aggregate();
+			} else {
+				dataPtr.sc->BroadcastSysMessage(StartSS,
+						AFTER_DATABUFFER_PRIORITY);
+			}
 			//dataPtr.sc->BroadcastSysMessage(StartSS, AFTER_DATABUFFER_PRIORITY);
 		}
 	}
